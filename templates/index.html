@@ -1,0 +1,604 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option Pricing Simulation Dashboard</title>
+
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Simple CSS -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .description {
+            color: #64748b;
+            margin-top: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .european-header {
+            color: #2563eb;
+        }
+
+        .american-header {
+            color: #16a34a;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (min-width: 640px) {
+            .form-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .btn-european {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-european:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-european:disabled {
+            background-color: #93c5fd;
+        }
+
+        .btn-american {
+            background-color: #16a34a;
+            color: white;
+        }
+
+        .btn-american:hover {
+            background-color: #15803d;
+        }
+
+        .btn-american:disabled {
+            background-color: #86efac;
+        }
+
+        .results {
+            background-color: #f0f9ff;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .results.european {
+            background-color: #eff6ff;
+        }
+
+        .results.american {
+            background-color: #f0fdf4;
+        }
+
+        .results h3 {
+            font-size: 1rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .result-label {
+            color: #64748b;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 15px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Option Pricing Simulation Dashboard</h1>
+            <p class="description">Monte Carlo simulations for European and American options</p>
+        </header>
+
+        <div class="grid">
+            <!-- European Option Panel -->
+            <div class="card">
+                <div class="card-header european-header">
+                    <h2 class="card-title">European Option Pricing</h2>
+                </div>
+
+                <p class="description">Monte Carlo with Geometric Brownian Motion</p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="euro-s0">Stock Price (S₀)</label>
+                        <input type="number" id="euro-s0" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="euro-k">Strike Price (K)</label>
+                        <input type="number" id="euro-k" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="euro-t">Maturity (Years)</label>
+                        <input type="number" id="euro-t" value="1" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="euro-r">Risk-free Rate</label>
+                        <input type="number" id="euro-r" value="0.05" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="euro-sigma">Volatility (σ)</label>
+                        <input type="number" id="euro-sigma" value="0.2" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="euro-simulations">Simulations</label>
+                        <input type="number" id="euro-simulations" value="1000">
+                    </div>
+                </div>
+
+                <button id="euro-run-btn" class="btn-european">Run Simulation</button>
+
+                <div id="euro-results" class="results european" style="display: none;">
+                    <h3>Results</h3>
+                    <div class="result-row">
+                        <span class="result-label">Option Price:</span>
+                        <span id="euro-price"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Average Payoff:</span>
+                        <span id="euro-payoff"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Discount Factor:</span>
+                        <span id="euro-discount"></span>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="display: none;" id="euro-chart-container">
+                    <h3>Stock Price Paths</h3>
+                    <canvas id="euro-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- American Option Panel -->
+            <div class="card">
+                <div class="card-header american-header">
+                    <h2 class="card-title">American Option Pricing</h2>
+                </div>
+
+                <p class="description">Least Squares Monte Carlo with Early Exercise</p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="amer-s0">Stock Price (S₀)</label>
+                        <input type="number" id="amer-s0" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="amer-k">Strike Price (K)</label>
+                        <input type="number" id="amer-k" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="amer-t">Maturity (Years)</label>
+                        <input type="number" id="amer-t" value="1" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="amer-r">Risk-free Rate</label>
+                        <input type="number" id="amer-r" value="0.05" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="amer-sigma">Volatility (σ)</label>
+                        <input type="number" id="amer-sigma" value="0.2" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="amer-simulations">Simulations</label>
+                        <input type="number" id="amer-simulations" value="1000">
+                    </div>
+                </div>
+
+                <button id="amer-run-btn" class="btn-american">Run Simulation</button>
+
+                <div id="amer-results" class="results american" style="display: none;">
+                    <h3>Results</h3>
+                    <div class="result-row">
+                        <span class="result-label">Option Price:</span>
+                        <span id="amer-price"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Option Type:</span>
+                        <span>American Put</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Pricing Method:</span>
+                        <span>Least Squares Monte Carlo</span>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="display: none;" id="amer-chart-container">
+                    <h3>Stock Price Paths & Exercise Boundary</h3>
+                    <canvas id="amer-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Option Pricing Dashboard | Monte Carlo Simulation</p>
+        </footer>
+    </div>
+
+    <script>
+        // Chart instances
+        let euroChart = null;
+        let amerChart = null;
+
+        // European option simulation
+        document.getElementById('euro-run-btn').addEventListener('click', async function() {
+            const button = this;
+            const origText = button.textContent;
+
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div> Running Simulation...';
+
+            try {
+                const params = {
+                    S0: parseFloat(document.getElementById('euro-s0').value),
+                    K: parseFloat(document.getElementById('euro-k').value),
+                    T: parseFloat(document.getElementById('euro-t').value),
+                    r: parseFloat(document.getElementById('euro-r').value),
+                    sigma: parseFloat(document.getElementById('euro-sigma').value),
+                    simulations: parseInt(document.getElementById('euro-simulations').value),
+                    steps: 252
+                };
+
+                const response = await fetch('/api/european-option', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+
+                // Display results
+                document.getElementById('euro-price').textContent = '$' + data.optionPrice.toFixed(4);
+                document.getElementById('euro-payoff').textContent = '$' + data.payoffMean.toFixed(4);
+                document.getElementById('euro-discount').textContent = data.discount.toFixed(4);
+                document.getElementById('euro-results').style.display = 'block';
+
+                // Display chart
+                document.getElementById('euro-chart-container').style.display = 'block';
+                renderEuroChart(data.paths);
+
+            } catch (error) {
+                console.error('Error running European option simulation:', error);
+                alert('Error running simulation. See console for details.');
+            } finally {
+                button.disabled = false;
+                button.textContent = origText;
+            }
+        });
+
+        // American option simulation
+        document.getElementById('amer-run-btn').addEventListener('click', async function() {
+            const button = this;
+            const origText = button.textContent;
+
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div> Running Simulation...';
+
+            try {
+                const params = {
+                    S0: parseFloat(document.getElementById('amer-s0').value),
+                    K: parseFloat(document.getElementById('amer-k').value),
+                    T: parseFloat(document.getElementById('amer-t').value),
+                    r: parseFloat(document.getElementById('amer-r').value),
+                    sigma: parseFloat(document.getElementById('amer-sigma').value),
+                    simulations: parseInt(document.getElementById('amer-simulations').value),
+                    steps: 50
+                };
+
+                const response = await fetch('/api/american-option', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+
+                // Display results
+                document.getElementById('amer-price').textContent = '$' + data.optionPrice.toFixed(4);
+                document.getElementById('amer-results').style.display = 'block';
+
+                // Display chart
+                document.getElementById('amer-chart-container').style.display = 'block';
+                renderAmerChart(data.paths, data.exerciseBoundary);
+
+            } catch (error) {
+                console.error('Error running American option simulation:', error);
+                alert('Error running simulation. See console for details.');
+            } finally {
+                button.disabled = false;
+                button.textContent = origText;
+            }
+        });
+
+        // Render European option chart
+        function renderEuroChart(paths) {
+            // Format data for Chart.js
+            const chartData = formatPathsForChart(paths);
+
+            // Destroy previous chart if it exists
+            if (euroChart) {
+                euroChart.destroy();
+            }
+
+            // Prepare datasets
+            const datasets = paths.map((_, idx) => ({
+                label: `Path ${idx + 1}`,
+                data: chartData.map(point => ({
+                    x: point.time,
+                    y: point[`path${idx}`]
+                })),
+                borderColor: getBlueColor(idx, paths.length),
+                fill: false,
+                tension: 0.1,
+                pointRadius: 0
+            }));
+
+            // Create chart
+            const ctx = document.getElementById('euro-chart').getContext('2d');
+            euroChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Time (Years)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Stock Price'
+                            }
+                        }
+                    },
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render American option chart
+        function renderAmerChart(paths, boundary) {
+            // Format data for Chart.js
+            const chartData = formatPathsForChart(paths);
+
+            // Destroy previous chart if it exists
+            if (amerChart) {
+                amerChart.destroy();
+            }
+
+            // Prepare path datasets
+            const pathDatasets = paths.map((_, idx) => ({
+                label: `Path ${idx + 1}`,
+                data: chartData.map(point => ({
+                    x: point.time,
+                    y: point[`path${idx}`]
+                })),
+                borderColor: getGreenColor(idx, paths.length),
+                fill: false,
+                tension: 0.1,
+                pointRadius: 0
+            }));
+
+            // Prepare boundary dataset
+            const boundaryDataset = {
+                label: 'Exercise Boundary',
+                data: boundary.map(point => ({
+                    x: point.t,
+                    y: point.price
+                })),
+                borderColor: 'red',
+                borderDash: [5, 5],
+                fill: false,
+                borderWidth: 2,
+                pointRadius: 0
+            };
+
+            // Create chart
+            const ctx = document.getElementById('amer-chart').getContext('2d');
+            amerChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [...pathDatasets, boundaryDataset]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Time (Years)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Stock Price'
+                            }
+                        }
+                    },
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper to format paths data for charts
+        function formatPathsForChart(paths) {
+            const chartData = [];
+            if (paths.length === 0) return chartData;
+
+            const timePoints = paths[0].map(point => point.t);
+
+            timePoints.forEach((t, idx) => {
+                const dataPoint = { time: t };
+
+                paths.forEach((path, pathIdx) => {
+                    dataPoint[`path${pathIdx}`] = path[idx].price;
+                });
+
+                chartData.push(dataPoint);
+            });
+
+            return chartData;
+        }
+
+        // Helper to get blue colors for European option paths
+        function getBlueColor(idx, total) {
+            const hue = 210 + (idx * 15) % 40;
+            return `hsl(${hue}, 80%, 50%)`;
+        }
+
+        // Helper to get green colors for American option paths
+        function getGreenColor(idx, total) {
+            const hue = 120 + (idx * 15) % 40;
+            return `hsl(${hue}, 80%, 50%)`;
+        }
+    </script>
+</body>
+</html>
+
